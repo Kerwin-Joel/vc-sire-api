@@ -1,0 +1,49 @@
+# Entorno completo en un comando:  docker compose up --build
+# Postgres + API + worker. Por defecto NO se conecta a SUNAT (SUNAT_LIVE=false).
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sire
+      POSTGRES_PASSWORD: sire
+      POSTGRES_DB: sire
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sire -d sire"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://sire:sire@db:5432/sire
+      STORAGE_DIR: /data/archivos
+    ports:
+      - "8080:8080"
+    volumes:
+      - archivos:/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+  worker:
+    build: .
+    command: ["node", "dist/worker.js"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://sire:sire@db:5432/sire
+      STORAGE_DIR: /data/archivos
+    volumes:
+      - archivos:/data
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_started   # la API aplica las migraciones al arrancar
+
+volumes:
+  pgdata:
+  archivos:
