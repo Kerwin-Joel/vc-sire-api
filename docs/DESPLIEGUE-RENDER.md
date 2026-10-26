@@ -7,8 +7,9 @@ Un servicio (la API, con su worker dentro) y una base Postgres. Todo lo define [
 - [ ] `npm test` y `npm run build && npm run ensayo` pasan en tu equipo (el ensayo recorre el flujo completo con un SUNAT simulado).
 - [ ] El código está en un repositorio de GitHub **privado** (Render lo lee desde ahí).
 - [ ] Tienes a mano un gestor de contraseñas para guardar tres valores (paso 3).
-- [ ] Aceptas el costo de los planes de pago. Los planes gratuitos no sirven: el servicio se duerme tras unos minutos sin tráfico
-  (el worker dejaría de seguir los tickets) y la base gratuita vence. Confirma precios en el panel de Render.
+- [ ] El Blueprint usa planes **gratuitos**, solo para la primera prueba: el servicio se duerme tras ~15 min sin tráfico (el worker
+  deja de seguir tickets; la primera petición lo despierta, con unos segundos de demora) y la base vence a los ~30 días.
+  Para producción cambia `plan` en `render.yaml` a uno de pago (confirma precios en el panel).
 
 ## 1. Subir el código a GitHub
 
