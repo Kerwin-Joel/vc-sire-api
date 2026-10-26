@@ -5,8 +5,8 @@ Los números (5.16, 5.33…) son los de los manuales oficiales de SUNAT:
 y [RCE v28](https://cpe.sunat.gob.pe/sites/default/files/inline-files/Manual%20de%20servicios%20Web%20Api%20-%20SIRE_Compras%20v28.pdf).
 Códigos de libro: **080000** = RCE (compras), **140000** = RVIE (ventas).
 
-Todo lo implementado es **lectura**. Nunca se ha probado contra SUNAT real: las pruebas usan un SUNAT simulado que responde con
-el formato de los manuales. Los puntos «por verificar» se confirman en la primera prueba real autorizada.
+Todo lo implementado es **lectura**. Las pruebas automáticas usan un SUNAT simulado que responde con el formato de los manuales.
+La **primera prueba real** (26/10/2026, una empresa, solo lectura) confirmó el flujo de compras y ventas; ver abajo qué quedó verificado.
 
 ## Implementado (lectura)
 
@@ -20,16 +20,24 @@ el formato de los manuales. Los puntos «por verificar» se confirman en la prim
 | Constancia de recepción (PDF) | 5.49 | 5.26 | RCE `.../registroslibros/constancia/constanciarecepcion?nomConstanciaRecepcion=` · RVIE `.../registroslibros/constancia/archivo?nomArchivo=` |
 | Reporte de cumplimiento (PDF) | 5.58 | 5.34 | `.../libros/rvierce/cumplimiento/web/omisos/{per}/{codLibro}/consultaReporteCumplimiento/exportardocumento` |
 
-### Por verificar en la primera prueba real
+### Primera prueba real (26/10/2026, una empresa, solo lectura)
 
-1. **Estados del ticket de compras (RCE).** El manual de compras no incluye la tabla de estados (el de ventas sí: 01 cargado, 02 validando,
-   03 con errores, 04 sin errores, 05 en proceso, 06 terminado). La API decide por la **descripción** que entrega SUNAT
-   (`clasificarEstado`). Confirmar con un ticket de compras real.
-2. **Forma de la respuesta de períodos.** El manual la describe como lista de ejercicios con `lisPeriodos`; el lector acepta también
-   la respuesta envuelta en `data`.
-3. **Constancia de compras:** el manual dice «arreglo de bytes»; el de ventas, JSON con `archivoPdf` en base64. La API acepta ambos.
-4. **Intervalo mínimo entre llamadas** (`SUNAT_MIN_INTERVAL_MS`, 400 ms): SUNAT responde 429 si se la abruma; ajustar con la experiencia real.
-5. **Vigencia del token** (`expires_in`): se usa el que entrega SUNAT.
+**Verificado**
+- **Token** (5.1): SUNAT entregó el token con las credenciales de la empresa.
+- **Períodos y propuestas** de compras (RCE) y ventas (RVIE): 7 pedidos en total (6 períodos de compras + 1 de ventas), todos terminaron.
+- **Estado del ticket de compras (RCE):** los 6 tickets terminaron y la API los clasificó como «Terminado». Ya no depende solo de la descripción.
+- **Lectura del archivo:** compras de 202607 coinciden con el SIRE web (7 documentos, total S/ 25,125.00, IGV neto 0.00 = 630.00 − 630.00 de la nota de crédito);
+  ventas coinciden con el SIRE web.
+- **Sin límite de tasa:** no hubo respuestas 429 con `SUNAT_MIN_INTERVAL_MS=400` (ráfaga de 6 períodos de compras con pausas del portal).
+
+**Pendiente**
+1. **Códigos exactos de estado del ticket de compras (RCE)** (el manual no los lista): confirmar el código numérico que devuelve SUNAT en un ticket real
+   (el portal lo muestra como «Estado según SUNAT» al expandir un ticket de compras).
+2. **Constancia de recepción:** el manual de compras dice «arreglo de bytes»; el de ventas, JSON con `archivoPdf` en base64. La API acepta ambos; no se probó
+   porque requiere haber presentado el registro.
+3. **Vigencia del token** (`expires_in`): se usa la que entrega SUNAT; no se midió.
+4. **Contador `informados`:** en los tickets de la prueba aparece 0 aun en períodos con comprobantes (p. ej. compras 202607). Es el campo de comprobantes
+   informados que devuelve SUNAT; revisar si debe mostrarse otro dato (cantidad leída del archivo).
 
 ## Bloqueado a propósito (escritura)
 
