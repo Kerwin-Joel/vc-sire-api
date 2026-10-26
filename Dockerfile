@@ -3,7 +3,9 @@
 #   docker run --env-file .env -p 8080:8080 vc-sire-api            # API
 #   docker run --env-file .env vc-sire-api node dist/worker.js      # worker
 
-FROM node:22-alpine AS construir
+FROM node:24-alpine AS construir
+# npm fijo: el mismo que genera el package-lock.json, para que `npm ci` sea reproducible.
+RUN npm install -g npm@11.21.1
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
@@ -11,8 +13,9 @@ COPY tsconfig.json tsconfig.build.json ./
 COPY src ./src
 RUN npm run build
 
-FROM node:22-alpine AS produccion
+FROM node:24-alpine AS produccion
 ENV NODE_ENV=production
+RUN npm install -g npm@11.21.1
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
