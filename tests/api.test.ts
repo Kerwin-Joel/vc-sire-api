@@ -213,6 +213,25 @@ describe("flujo completo: propuesta de compras", () => {
   });
 });
 
+describe("archivos guardados en Postgres (como en producción)", () => {
+  it("el flujo completo funciona y el archivo descargado es idéntico al que entregó SUNAT", async () => {
+    const e = await crearEntorno({ pgStorage: true, sunat: { zip: ZIP_COMPRAS, consultasAntesDeTerminar: 1 } });
+    const { cabeceras } = await e.empresaActiva();
+    await ir(e, "/api/v1/sire/rce/202609/propuesta", cabeceras);
+    await e.k.worker.procesarPendientes();
+
+    const lista = await leer(await ir(e, "/api/v1/sire/rce/202609/comprobantes", cabeceras));
+    expect(lista.datos.totales.total_comprobantes).toBe(3);
+
+    const res = await ir(e, "/api/v1/sire/tickets/20260900000001/archivo", cabeceras);
+    expect(res.status).toBe(200);
+    expect(Buffer.from(await res.arrayBuffer()).equals(Buffer.from(ZIP_COMPRAS))).toBe(true);
+    const guardados = await e.db.query<{ bytes: number }>("select bytes from archivos");
+    expect(guardados).toHaveLength(1);
+    expect(guardados[0]!.bytes).toBe(ZIP_COMPRAS.length);
+  });
+});
+
 describe("flujo completo: propuesta de ventas", () => {
   it("lee las ventas y las entrega con los nombres que espera el portal", async () => {
     const e = await crearEntorno({ sunat: { zip: ZIP_VENTAS, consultasAntesDeTerminar: 0 } });

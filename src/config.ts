@@ -12,6 +12,8 @@ const envSchema = z.object({
 
   /** Conexión a Postgres. */
   DATABASE_URL: z.string().min(1),
+  /** Máximo de conexiones abiertas a Postgres (los planes chicos permiten pocas; la API y el worker suman). */
+  DB_POOL_MAX: z.coerce.number().int().positive().default(10),
 
   /** 32 bytes en base64 para cifrar la Clave SOL y el client_secret (AES-256-GCM). Generar con `openssl rand -base64 32`. */
   APP_ENCRYPTION_KEY: z.string().min(1),
@@ -37,8 +39,11 @@ const envSchema = z.object({
   SUNAT_TIMEOUT_MS: z.coerce.number().int().positive().default(60_000),
   SUNAT_MIN_INTERVAL_MS: z.coerce.number().int().nonnegative().default(400),
 
-  /** Dónde se guardan los archivos que entrega SUNAT. */
+  /** Dónde se guardan los archivos que entrega SUNAT: "postgres" (por defecto, sin discos) o "local" (carpeta STORAGE_DIR). */
+  STORAGE_DRIVER: z.enum(["postgres", "local"]).default("postgres"),
   STORAGE_DIR: z.string().default("./data/archivos"),
+  /** Si es true, la API también corre el worker dentro del mismo proceso (un solo servicio; ideal para empezar). */
+  RUN_WORKER_IN_API: bool,
 
   /** Cola de trabajos. */
   WORKER_INTERVAL_MS: z.coerce.number().int().positive().default(2_000),

@@ -34,7 +34,8 @@ cp .env.example .env          # y completa APP_ENCRYPTION_KEY y API_KEY_PEPPER (
 npm run dev:db                # Postgres local en el puerto 5433 (en otra terminal)
 npm run dev                   # API en http://localhost:8080  (aplica las migraciones al arrancar)
 npm run dev:worker            # proceso en segundo plano que sigue los tickets (en otra terminal)
-npm test                      # 71 pruebas: no necesitan internet ni SUNAT
+npm test                      # 77 pruebas: no necesitan internet ni SUNAT
+npm run build && npm run ensayo   # ensayo general: servidor compilado + Postgres por red + SUNAT simulado
 ```
 
 Con Docker: `docker compose up --build` levanta Postgres, la API y el worker.
@@ -79,11 +80,12 @@ docs/                                          arquitectura, servicios de SUNAT,
 
 Más detalle en [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md).
 
-## Producción
+## Producción (Render)
 
-1. Un Postgres administrado y un volumen persistente para los archivos de SUNAT (`STORAGE_DIR`).
-2. Variables de entorno de la tabla de arriba (con `REGISTRATION_TOKEN`). `SUNAT_LIVE` y `SIRE_WRITES_ENABLED` empiezan en `false`.
-3. Dos procesos con la misma imagen: la API (`node dist/server.js`) y el worker (`node dist/worker.js`).
-4. Poner la API detrás de HTTPS.
-5. Para la **primera prueba real** contra SUNAT: activar `SUNAT_LIVE=true` solo en un entorno controlado y con una empresa de
-   prueba; revisar los puntos marcados «por verificar» en `docs/SUNAT-SERVICIOS.md`.
+Todo está preparado en [`render.yaml`](render.yaml) y explicado en [`docs/DESPLIEGUE-RENDER.md`](docs/DESPLIEGUE-RENDER.md):
+una base Postgres y un servicio que corre la API con su worker dentro. Los archivos de SUNAT se guardan en Postgres (no hacen
+falta discos). `SUNAT_LIVE` y `SIRE_WRITES_ENABLED` empiezan en `false`.
+
+La **primera prueba real** contra SUNAT se hace ya desplegada, acompañada y de solo lectura: el protocolo está en el paso 6 de esa guía.
+
+Con otro proveedor: la misma imagen (`Dockerfile`) sirve para la API y el worker (`node dist/worker.js` con `RUN_WORKER_IN_API=false`).

@@ -17,7 +17,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "dev:db": "tsx scripts/dev-db.ts"
+    "dev:db": "tsx scripts/dev-db.ts",
+    "ensayo": "tsx scripts/ensayo.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",

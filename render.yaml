@@ -1,0 +1,57 @@
+# Render Blueprint de vc-sire-api: una base Postgres + un servicio (la API con su worker dentro).
+# Guía paso a paso: docs/DESPLIEGUE-RENDER.md
+#
+# IMPORTANTE antes de usarlo:
+#  • Los planes de abajo son de pago (los gratuitos de Render duermen el servicio o vencen la base, y el worker
+#    necesita estar siempre encendido). Confirma nombres y precios actuales en el panel de Render.
+#  • SUNAT_LIVE y SIRE_WRITES_ENABLED arrancan en "false": no sale nada hacia SUNAT hasta que se decida.
+
+databases:
+  - name: vc-sire-db
+    plan: 0.1c-256mb # el más chico de pago; subir si hace falta
+    postgresMajorVersion: "17"
+    region: ohio
+    ipAllowList: [] # solo se puede llegar desde servicios de Render (no desde internet)
+
+services:
+  - type: web
+    name: vc-sire-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: 0.5c-512mb
+    region: ohio
+    healthCheckPath: /health
+    autoDeploy: false # los cambios se despliegan a mano: este servicio habla con SUNAT
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: vc-sire-db
+          property: connectionString
+      # Render genera estos tres al crear el servicio (base64 de 256 bits).
+      # ¡GUÁRDALOS en tu gestor de contraseñas! Si se pierde APP_ENCRYPTION_KEY, las Claves SOL guardadas no se pueden recuperar.
+      - key: APP_ENCRYPTION_KEY
+        generateValue: true
+      - key: API_KEY_PEPPER
+        generateValue: true
+      - key: REGISTRATION_TOKEN
+        generateValue: true
+      # Interruptores de seguridad (ver README). Cambiarlos es una decisión consciente.
+      - key: SUNAT_LIVE
+        value: "false"
+      - key: SIRE_WRITES_ENABLED
+        value: "false"
+      - key: SUNAT_API_BASE
+        value: https://api-sire.sunat.gob.pe
+      - key: SUNAT_AUTH_BASE
+        value: https://api-seguridad.sunat.gob.pe
+      # Un solo servicio: la API corre también el worker, y los archivos de SUNAT se guardan en Postgres.
+      - key: RUN_WORKER_IN_API
+        value: "true"
+      - key: STORAGE_DRIVER
+        value: postgres
+      - key: DB_POOL_MAX
+        value: "8"
+      - key: LOG_LEVEL
+        value: info

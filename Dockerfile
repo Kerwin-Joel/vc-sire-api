@@ -22,8 +22,8 @@ COPY migrations ./migrations
 # Corre sin privilegios y con una carpeta propia para los archivos de SUNAT.
 RUN mkdir -p /data/archivos && chown -R node:node /data /app
 USER node
+# Por defecto los archivos de SUNAT van a Postgres (STORAGE_DRIVER=postgres); /data solo se usa con STORAGE_DRIVER=local.
 ENV STORAGE_DIR=/data/archivos
-VOLUME ["/data"]
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \

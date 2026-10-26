@@ -41,7 +41,7 @@ describe("adaptador de Postgres de producción (pg)", () => {
   });
 
   it("aplica las migraciones y no las repite", async () => {
-    expect(await migrate(db)).toEqual(["001_init.sql"]);
+    expect(await migrate(db)).toEqual(["001_init.sql", "002_archivos.sql"]);
     expect(await migrate(db)).toEqual([]);
   });
 

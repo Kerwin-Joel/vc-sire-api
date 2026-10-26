@@ -43,15 +43,18 @@ export function crearSunatFalso(o: OpcionesSunatFalso) {
 
   const fetchFalso: typeof fetch = async (input, init) => {
     const url = new URL(typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url);
-    const metodo = (init?.method ?? "GET").toUpperCase();
-    const auth = new Headers(init?.headers).get("authorization") ?? "";
+    // Sirve igual si lo llama el código con (url, opciones) o si lo recibe un servidor HTTP como un Request completo.
+    const pedido = typeof input === "object" && "headers" in input && "method" in input ? (input as Request) : null;
+    const metodo = (init?.method ?? pedido?.method ?? "GET").toUpperCase();
+    const auth = new Headers(init?.headers ?? pedido?.headers).get("authorization") ?? "";
     const query = Object.fromEntries(url.searchParams.entries());
     const llamada: Llamada = { metodo, url: url.toString(), ruta: url.pathname, query, autorizado: auth === `Bearer ${tokenValido()}` };
     llamadas.push(llamada);
 
     // ── Autenticación ──
     if (url.pathname.includes("/oauth2/token")) {
-      const cuerpo = init?.body instanceof URLSearchParams ? init.body : new URLSearchParams(String(init?.body ?? ""));
+      const cuerpo =
+        init?.body instanceof URLSearchParams ? init.body : new URLSearchParams(init?.body ? String(init.body) : pedido ? await pedido.text() : "");
       const ok =
         cuerpo.get("username") === `${o.ruc}${o.usuario}` &&
         cuerpo.get("password") === o.clave &&

@@ -14,7 +14,7 @@
                                           │  empresas · tickets  │     (sigue tickets,
                                           │  comprobantes · cola │      baja y lee archivos)
                                           └──────────────────────┘
-                                                    + carpeta de archivos (ZIP/PDF de SUNAT)
+                                                    + archivos de SUNAT (ZIP/PDF) también en Postgres
 ```
 
 - **API** y **worker** son dos procesos de la misma imagen. La API responde rápido; todo lo lento (esperar a SUNAT, bajar

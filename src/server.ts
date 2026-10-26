@@ -6,17 +6,17 @@ import { createPgDb } from "./db/index.js";
 import { migrate } from "./db/migrate.js";
 import { crearApp } from "./http/app.js";
 import { createLogger } from "./logger.js";
-import { LocalStorage } from "./storage.js";
+import { crearStorage } from "./storage.js";
 
 const cfg = loadConfig();
 const log = createLogger(cfg.LOG_LEVEL, cfg.NODE_ENV === "development");
-const db = createPgDb(cfg.DATABASE_URL);
+const db = createPgDb(cfg.DATABASE_URL, { max: cfg.DB_POOL_MAX });
 
-mkdirSync(cfg.STORAGE_DIR, { recursive: true });
+if (cfg.STORAGE_DRIVER === "local") mkdirSync(cfg.STORAGE_DIR, { recursive: true });
 const aplicadas = await migrate(db);
 if (aplicadas.length) log.info({ aplicadas }, "migraciones aplicadas");
 
-const contenedor = crearContenedor(cfg, db, log, new LocalStorage(cfg.STORAGE_DIR));
+const contenedor = crearContenedor(cfg, db, log, crearStorage(cfg.STORAGE_DRIVER, db, cfg.STORAGE_DIR));
 const app = crearApp(contenedor);
 
 const servidor = serve({ fetch: app.fetch, port: cfg.PORT }, (info) => {
@@ -26,8 +26,14 @@ const servidor = serve({ fetch: app.fetch, port: cfg.PORT }, (info) => {
   );
 });
 
+if (cfg.RUN_WORKER_IN_API) {
+  contenedor.worker.iniciar();
+  log.info("el worker corre dentro de la API (RUN_WORKER_IN_API=true)");
+}
+
 const apagar = async () => {
   log.info("apagando…");
+  contenedor.worker.detener();
   servidor.close();
   await db.close();
   process.exit(0);

@@ -2,7 +2,7 @@ import { loadConfig } from "../config.js";
 import { crearContenedor } from "../container.js";
 import { createLogger } from "../logger.js";
 import { crearApp } from "../http/app.js";
-import { MemoryStorage } from "../storage.js";
+import { MemoryStorage, PgStorage } from "../storage.js";
 import { crearDbPrueba } from "./db.js";
 import { crearSunatFalso, type OpcionesSunatFalso } from "./sunatFalso.js";
 
@@ -18,6 +18,8 @@ export const EMPRESA = {
 export interface OpcionesEntorno {
   env?: Record<string, string>;
   sunat?: Partial<OpcionesSunatFalso>;
+  /** Guardar los archivos en Postgres (como en producción) en vez de en memoria. */
+  pgStorage?: boolean;
 }
 
 /** Todo el sistema armado en memoria: base real (PGlite), SUNAT de mentira y la app lista para recibir peticiones. */
@@ -39,7 +41,7 @@ export async function crearEntorno(o: OpcionesEntorno = {}) {
   } as NodeJS.ProcessEnv);
 
   const db = await crearDbPrueba();
-  const storage = new MemoryStorage();
+  const storage = o.pgStorage ? new PgStorage(db) : new MemoryStorage();
   const sunat = crearSunatFalso({
     ruc: EMPRESA.ruc,
     usuario: EMPRESA.sol_user,
