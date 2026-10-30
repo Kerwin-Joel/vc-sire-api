@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { Config } from "../config.js";
 import { SunatError } from "../errors.js";
 import type { Guards } from "./guard.js";
+import type { Logger } from "../logger.js";
 
 /** Credenciales de SUNAT de una empresa, ya descifradas (viven solo en memoria, el tiempo de la petición). */
 export interface CredencialesSunat {
@@ -50,6 +51,7 @@ export class TokenService {
     private readonly guards: Guards,
     private readonly fetchImpl: typeof fetch = fetch,
     private readonly ahora: () => number = Date.now,
+    private readonly log?: Logger,
   ) {}
 
   invalidar(tenantId: number): void {
@@ -130,6 +132,8 @@ export class TokenService {
     }
 
     this.rechazos.delete(c.tenantId);
+    // Vigencia real que entrega SUNAT (punto «por verificar» de SUNAT-SERVICIOS.md). Nunca se registra el token.
+    this.log?.info({ tenantId: c.tenantId, expiresIn: json.expires_in ?? null }, "token de SUNAT obtenido");
     const venceEn = this.ahora() + (json.expires_in ?? 3600) * 1000;
     this.tokens.set(c.tenantId, { token: json.access_token, venceEn });
     return json.access_token;

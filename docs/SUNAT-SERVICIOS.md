@@ -30,14 +30,19 @@ La **primera prueba real** (26/10/2026, una empresa, solo lectura) confirmó el 
   ventas coinciden con el SIRE web.
 - **Sin límite de tasa:** no hubo respuestas 429 con `SUNAT_MIN_INTERVAL_MS=400` (ráfaga de 6 períodos de compras con pausas del portal).
 
+### Revisión del 30/10/2026 (sin consultas nuevas a SUNAT: se leyeron los 9 tickets ya guardados de una empresa)
+
+- **Estado del ticket de compras (RCE): verificado.** Terminado = código **`06`** «Terminado», igual que en ventas (7 tickets de compras reales,
+  del 26/10 y del 30/10).
+- **Contador `informados`: aclarado.** Vale 0 en los 9 tickets, también en ventas 202609, que tenía 70 comprobantes. Todos son del proceso **`10`
+  (exportar propuesta)**: el contador es de los procesos en los que el contribuyente *envía* comprobantes a SUNAT, no de las descargas. El portal
+  ya no lo muestra en los tickets de proceso 10; la cantidad real es la que se lee del archivo.
+
 **Pendiente**
-1. **Códigos exactos de estado del ticket de compras (RCE)** (el manual no los lista): confirmar el código numérico que devuelve SUNAT en un ticket real
-   (el portal lo muestra como «Estado según SUNAT» al expandir un ticket de compras).
-2. **Constancia de recepción:** el manual de compras dice «arreglo de bytes»; el de ventas, JSON con `archivoPdf` en base64. La API acepta ambos; no se probó
-   porque requiere haber presentado el registro.
-3. **Vigencia del token** (`expires_in`): se usa la que entrega SUNAT; no se midió.
-4. **Contador `informados`:** en los tickets de la prueba aparece 0 aun en períodos con comprobantes (p. ej. compras 202607). Es el campo de comprobantes
-   informados que devuelve SUNAT; revisar si debe mostrarse otro dato (cantidad leída del archivo).
+1. **Constancia de recepción:** el manual de compras dice «arreglo de bytes»; el de ventas, JSON con `archivoPdf` en base64. La API acepta ambos.
+   No se puede probar hasta presentar un registro (eso es escritura: depende de la decisión F3 del portal).
+2. **Vigencia del token** (`expires_in`): desde el 30/10/2026 cada token nuevo deja en el log `token de SUNAT obtenido` con `expiresIn`
+   (segundos; nunca el token). Leerlo en los logs de Render tras la próxima consulta y anotarlo aquí.
 
 ## Bloqueado a propósito (escritura)
 

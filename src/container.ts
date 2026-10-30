@@ -38,7 +38,7 @@ export interface Extras {
 /** Arma todas las piezas conectadas entre sí. Un solo lugar donde se ve de qué depende cada cosa. */
 export function crearContenedor(cfg: Config, db: Db, log: Logger, storage: FileStorage, extras: Extras = {}): Container {
   const guards = new Guards(cfg);
-  const tokens = new TokenService(cfg, guards, extras.fetchImpl);
+  const tokens = new TokenService(cfg, guards, extras.fetchImpl, undefined, log);
   const http = new SunatHttp(cfg, tokens, guards, log, extras.fetchImpl, extras.dormirFn);
   const sire = new SireClient(http);
   const tenants = new TenantRepo(db, parseEncryptionKey(cfg.APP_ENCRYPTION_KEY), cfg.API_KEY_PEPPER);
